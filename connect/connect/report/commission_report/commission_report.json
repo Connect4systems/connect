@@ -1,0 +1,46 @@
+{
+ "doctype": "Report",
+ "module": "connect",
+ "ref_doctype": "Sales Invoice",
+ "roles": [
+  {
+   "role": "Tax-Review"
+  },
+  {
+   "role": "Sales Master Manager"
+  },
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "محاسب مبيعات"
+  },
+  {
+   "role": "Sales User"
+  },
+  {
+   "role": "Sales Manager"
+  },
+  {
+   "role": "Accounts User"
+  },
+  {
+   "role": "Accounts Manager"
+  },
+  {
+   "role": "Auditor"
+  },
+  {
+   "role": "Employee Self Service"
+  }
+ ],
+ "name": "Commission Report",
+ "report_name": "Commission Report",
+ "report_type": "Script Report",
+ "is_standard": "Yes",
+ "disabled": 0,
+ "prepared_report": 0,
+ "add_total_row": 0,
+ "columns": [],
+ "filters": []
+}
