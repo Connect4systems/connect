@@ -86,6 +86,24 @@ class ValuationTests(unittest.TestCase):
         value = self.value([dict(self.delivery, incoming_rate=None)], [self.order])
         self.assertEqual(value['valuation_rate'], 15)
 
+    def test_gross_profit_uses_net_company_amount_not_invoice_amount(self):
+        self.item.update(amount=10, base_net_amount=300)
+        self.assertEqual(self.value([self.delivery])['gross_profit'], 180)
+
+    def test_gross_profit_stays_blank_when_cost_is_missing(self):
+        self.item['base_net_amount'] = 300
+        self.assertIsNone(self.value()['gross_profit'])
+
+    def test_gross_profit_for_zero_cost_and_zero_sales(self):
+        self.item['base_net_amount'] = 0
+        self.assertEqual(self.value([self.delivery])['gross_profit'], -120)
+        self.item['base_net_amount'] = 300
+        self.assertEqual(self.value([dict(self.delivery, incoming_rate=0)])['gross_profit'], 300)
+
+    def test_gross_profit_reverses_on_return(self):
+        self.item.update(stock_qty=-6, base_net_amount=-300)
+        self.assertEqual(self.value([self.delivery])['gross_profit'], -180)
+
 
 class AttrDict(dict):
     __getattr__ = dict.get
@@ -154,13 +172,13 @@ class ReportTests(unittest.TestCase):
         invoice_fields = {field for field, dt in self.report.DISPLAY_FIELDS if dt == 'Sales Invoice'} | {'currency'}
         item_fields = {field for field, dt in self.report.DISPLAY_FIELDS if dt == 'Sales Invoice Item'} | {
             'name', 'parent', 'idx', 'stock_qty', 'stock_uom', 'uom',
-            'sales_order', 'so_detail', 'delivery_note', 'dn_detail'
+            'sales_order', 'so_detail', 'delivery_note', 'dn_detail', 'base_net_amount'
         }
         self.report.get_permitted_fields.side_effect = lambda dt, **kwargs: invoice_fields if dt == 'Sales Invoice' else item_fields
         self.frappe.get_list.return_value = [AttrDict(name='SI-1', currency='USD', grand_total=200)]
         self.frappe.get_all.return_value = [
-            AttrDict(name='ROW-1', parent='SI-1', item_code='ITEM', qty=2, stock_qty=6, dn_detail='DN-ROW'),
-            AttrDict(name='ROW-2', parent='SI-1', item_code='ITEM', qty=1, stock_qty=3)
+            AttrDict(name='ROW-1', parent='SI-1', item_code='ITEM', qty=2, stock_qty=6, dn_detail='DN-ROW', base_net_amount=300),
+            AttrDict(name='ROW-2', parent='SI-1', item_code='ITEM', qty=1, stock_qty=3, base_net_amount=150)
         ]
         self.frappe.get_cached_value = Mock(return_value='EGP')
         delivery = AttrDict(name='DN-ROW', parent='DN-1', item_code='ITEM', stock_qty=10, incoming_rate=20)
@@ -172,6 +190,9 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(len(data), 2)
         self.assertEqual(data[0]['total_valuation'], 120)
         self.assertIsNone(data[1]['total_valuation'])
+        self.assertEqual(data[0]['gross_profit'], 180)
+        self.assertIsNone(data[1]['gross_profit'])
+        self.assertIn('base_net_amount', self.frappe.get_all.call_args.kwargs['fields'])
         self.assertEqual(data[0]['currency'], 'USD')
         self.assertEqual(data[0]['company_currency'], 'EGP')
         self.assertEqual(data[0]['grand_total'], 200)
@@ -191,6 +212,9 @@ class ReportTests(unittest.TestCase):
         self.assertEqual(by_field['base_price_list_rate']['options'], 'company_currency')
         self.assertEqual(by_field['valuation_rate']['options'], 'company_currency')
         self.assertEqual(by_field['total_valuation']['options'], 'company_currency')
+        self.assertEqual(by_field['gross_profit']['options'], 'company_currency')
+        field_order = [column['fieldname'] for column in columns]
+        self.assertEqual(field_order.index('gross_profit'), field_order.index('total_valuation') + 1)
 
     def test_missing_required_filters_rejected(self):
         with self.assertRaises(ValueError):

@@ -29,8 +29,14 @@ this report is not an immutable valuation snapshot at invoice posting time.
 
 Valuation Rate is in company currency per **stock UOM**. Total Valuation is this
 rate multiplied by the **invoice item's stock quantity**, retaining the sign for
-returns. Invoice selling amounts retain invoice currency. Zero stored rates remain
-zero; missing/inaccessible rates stay blank and show `Not Available`. This report
+returns. Invoice selling amounts retain invoice currency.
+
+**Gross Profit**, immediately after Total Valuation, is the invoice item's
+`base_net_amount` minus Total Valuation, in company currency. It uses net sales
+after discounts and excluding taxes, before commission expenses. When valuation
+is an estimate, gross profit is also an estimate. Missing costs leave gross profit
+blank. Zero stored valuation rates remain zero; missing/inaccessible rates stay
+blank and show `Not Available`. This report
 does not use current Bin rates, recompute stock-ledger costs, or roll up bundle
 component costs. An invoice with no eligible Delivery Note or Sales Order source
 therefore has no valuation, including a standalone stock-updating invoice.

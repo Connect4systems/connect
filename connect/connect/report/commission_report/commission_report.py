@@ -48,7 +48,7 @@ def execute(filters=None):
         return columns, []
     item_fields = {field for field, dt in display if dt == 'Sales Invoice Item'} | {
         'name', 'parent', 'idx', 'item_code', 'stock_qty', 'stock_uom', 'uom',
-        'sales_order', 'so_detail', 'delivery_note', 'dn_detail'
+        'sales_order', 'so_detail', 'delivery_note', 'dn_detail', 'base_net_amount'
     }
     if not item_fields.issubset(permitted['Sales Invoice Item']):
         frappe.throw(_('You do not have access to the item fields required by this report.'), frappe.PermissionError)
@@ -77,7 +77,7 @@ def execute(filters=None):
             row.update(get_valuation(item, indexes))
             row['valuation_source'] = _(row['valuation_source'])
             data.append(row)
-    message = _('Valuation Rate is per stock unit in company currency. Total Valuation = stock quantity × valuation rate. Sales Order sources are estimates. Missing or inaccessible costs remain blank. Invoice totals repeat on each item row.')
+    message = _('Valuation Rate is per stock unit in company currency. Total Valuation = stock quantity × valuation rate. Gross Profit = item net sales in company currency − Total Valuation. Sales Order sources are estimates. Missing or inaccessible costs and their gross profit remain blank. Invoice totals repeat on each item row.')
     return columns, data, message
 
 
@@ -139,6 +139,7 @@ def get_columns(display):
         ('stock_uom', 'Stock UOM', 'Link', 'UOM'),
         ('valuation_rate', 'Valuation Rate', 'Currency', 'company_currency'),
         ('total_valuation', 'Total Valuation', 'Currency', 'company_currency'),
+        ('gross_profit', 'Gross Profit', 'Currency', 'company_currency'),
         ('valuation_source', 'Valuation Source', 'Data', None),
         ('valuation_reference', 'Valuation Reference', 'Data', None),
         ('sales_order', 'Sales Order', 'Link', 'Sales Order'),

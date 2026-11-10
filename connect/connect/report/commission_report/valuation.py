@@ -54,9 +54,12 @@ def get_valuation(item, indexes):
 
 
 def result(item, rate, source, reference):
+    total_valuation = None if rate is None else rate * (item.get('stock_qty') or 0)
+    net_sales = item.get('base_net_amount')
     return {
         'valuation_rate': rate,
-        'total_valuation': None if rate is None else rate * (item.get('stock_qty') or 0),
+        'total_valuation': total_valuation,
+        'gross_profit': None if total_valuation is None or net_sales is None else net_sales - total_valuation,
         'valuation_source': source,
         'valuation_reference': reference,
     }
